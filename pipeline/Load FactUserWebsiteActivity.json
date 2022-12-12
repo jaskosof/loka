@@ -1,0 +1,264 @@
+{
+	"name": "Load FactUserWebsiteActivity",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup TrackUserWebsite folder",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": {
+							"value": "select * from [etl].[IncrementalLoadMark] WHERE SourceServer = 'BISQL' and SchemaName = 'cms2' and TableName = 'Activity_TrackUserWebsite'",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "BIServer_SQL",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Get files from landing folder",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "Lookup TrackUserWebsite folder",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "CMS_V2_DL_Landing_folder",
+						"type": "DatasetReference",
+						"parameters": {
+							"FolderName": {
+								"value": "@activity('Lookup TrackUserWebsite folder').output.firstRow.FolderName",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "JsonReadSettings"
+					}
+				}
+			},
+			{
+				"name": "Files exist",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Get files from landing folder",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(length(activity('Get files from landing folder').output.childItems), 0)\n\n\n",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Load FactUserWebsiteSnapshot",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [
+								{
+									"activity": "Delete from import table",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "1.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "Landing_2_DB_UserWebsiteActivity",
+									"type": "DataFlowReference",
+									"parameters": {
+										"FolderName": {
+											"value": "'@{activity('Lookup TrackUserWebsite folder').output.firstRow.FolderName}'",
+											"type": "Expression"
+										}
+									},
+									"datasetParameters": {
+										"TrackUserWebsite": {
+											"FolderName": "@activity('Lookup TrackUserWebsite folder').output.firstRow.FolderName"
+										},
+										"Site": {
+											"FolderName": "Site"
+										},
+										"SinkFactUserWebsiteSnapshot": {
+											"Schema": "import",
+											"TableName": "FactUserWebsiteActivitySnapshot"
+										}
+									}
+								},
+								"integrationRuntime": {
+									"referenceName": "ir-azure",
+									"type": "IntegrationRuntimeReference"
+								},
+								"traceLevel": "Fine"
+							}
+						},
+						{
+							"name": "Delete from import table",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Lookup max ViewedOnDate",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[import].[usp_ImportTable_Delete_Data]",
+								"storedProcedureParameters": {
+									"DaysToKeep": {
+										"value": "7",
+										"type": "Int32"
+									},
+									"RefDate": {
+										"value": {
+											"value": "@activity('Lookup max ViewedOnDate').output.firstRow.MaxViewedOnDate",
+											"type": "Expression"
+										},
+										"type": "DateTime"
+									},
+									"TableColumnName": {
+										"value": "ViewedOnDate",
+										"type": "String"
+									},
+									"TableName": {
+										"value": "FactUserWebsiteActivitySnapshot",
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSQL_Insight",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Load data from import to dbo",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Load FactUserWebsiteSnapshot",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[usp_FactUserWebsiteActivitySnapshot_Load_Data]",
+								"storedProcedureParameters": {
+									"LogID": {
+										"value": {
+											"value": "@pipeline().RunId",
+											"type": "Expression"
+										},
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSQL_Insight",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Lookup max ViewedOnDate",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderQuery": "select max(ViewedOnDate) as MaxViewedOnDate from dbo.FactUserWebsiteActivitySnapshot",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "AzureSQL_Insight_db",
+									"type": "DatasetReference"
+								},
+								"firstRowOnly": true
+							}
+						}
+					]
+				}
+			}
+		],
+		"folder": {
+			"name": "Facts"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-11-22T11:34:43Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

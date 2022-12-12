@@ -1,0 +1,16 @@
+{
+	"name": "Leads_DB",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SQL_Leads",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "CMS_V2"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

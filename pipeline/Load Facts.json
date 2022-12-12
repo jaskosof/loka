@@ -1,0 +1,59 @@
+{
+	"name": "Load Facts",
+	"properties": {
+		"activities": [
+			{
+				"name": "Load FactUserWebsiteActivity",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Load FactUserWebsiteActivity",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Load FactUser",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Load FactUserSnapshot",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Load FactMobileUserSystemUsage",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Load FactUser",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Load FactMobileUserSystemUsageSnapshot",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "Master"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-11-22T11:34:43Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

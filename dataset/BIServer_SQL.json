@@ -1,0 +1,16 @@
+{
+	"name": "BIServer_SQL",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "BIServer_EDW",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Shared"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

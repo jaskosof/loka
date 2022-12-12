@@ -1,0 +1,16 @@
+{
+	"name": "CMS_V2_Activity_DB",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SQL_CMS_V2_Activity",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "CMS_V2"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

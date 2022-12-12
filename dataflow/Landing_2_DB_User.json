@@ -1,0 +1,71 @@
+{
+	"name": "Landing_2_DB_User",
+	"properties": {
+		"folder": {
+			"name": "Dimensions"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "CMS_V2_DL_Landing_folder",
+						"type": "DatasetReference"
+					},
+					"name": "User"
+				},
+				{
+					"dataset": {
+						"referenceName": "CMS_V2_DL_folder",
+						"type": "DatasetReference"
+					},
+					"name": "Lead"
+				},
+				{
+					"dataset": {
+						"referenceName": "CMS_V2_DL_folder",
+						"type": "DatasetReference"
+					},
+					"name": "LeadMobileAppOpeningAudit"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSQL_Insight_table",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "SelectUser"
+				},
+				{
+					"name": "DerivedColumnUser",
+					"description": "Creates an explicit mapping for each drifted column"
+				},
+				{
+					"name": "SelectLead"
+				},
+				{
+					"name": "DerivedColumnLead"
+				},
+				{
+					"name": "JoinLead"
+				},
+				{
+					"name": "DerivedColumnLeadMobileLastOpeningAudit"
+				},
+				{
+					"name": "FirstAppOpenDate"
+				},
+				{
+					"name": "JoinFirstAppOpenDate"
+				}
+			],
+			"script": "parameters{\n\tFolderName as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tdocumentForm: 'documentPerLine') ~> User\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tdocumentForm: 'documentPerLine') ~> Lead\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tdocumentForm: 'documentPerLine') ~> LeadMobileAppOpeningAudit\nDerivedColumnUser select(mapColumn(\n\t\tSourceID,\n\t\tLeadID,\n\t\tUserId,\n\t\tDateCreatedUTC,\n\t\tGclid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectUser\nUser derive(SourceID = 1,\n\t\tLeadID = toInteger(byName('LeadId')),\n\t\tUserId = toString(byName('UserId')),\n\t\tDateCreatedUTC = toDate(left(toString(byName('DateCreatedUTC')), 10)),\n\t\tGclid = toString(byName('Gclid'))) ~> DerivedColumnUser\nDerivedColumnLead select(mapColumn(\n\t\tLeadID,\n\t\tLeadDateCreatedUTC,\n\t\tLeadImportActionID\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectLead\nLead derive(LeadID = toInteger(byName('ID')),\n\t\tLeadDateCreatedUTC = toDate(left(toString(byName('DateCreatedUTC')), 10)),\n\t\tLeadImportActionID = toInteger(byName('LeadImportActionId'))) ~> DerivedColumnLead\nSelectUser, SelectLead join(SelectUser@LeadID == SelectLead@LeadID,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> JoinLead\nLeadMobileAppOpeningAudit derive(Id = toInteger(byName('Id')),\n\t\tLeadId = toInteger(byName('LeadId')),\n\t\tMobileAppOpenDateUTC = toDate(left(toString(byName('OpenedAtUTC')), 10))) ~> DerivedColumnLeadMobileLastOpeningAudit\nDerivedColumnLeadMobileLastOpeningAudit aggregate(groupBy(LeadId),\n\tFirstMobileAppOpenDateUTC = first(MobileAppOpenDateUTC)) ~> FirstAppOpenDate\nJoinLead, FirstAppOpenDate join(SelectUser@LeadID == FirstAppOpenDate@LeadId,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> JoinFirstAppOpenDate\nJoinFirstAppOpenDate sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tstagingSchemaName: 'import',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tSourceID,\n\t\tUserID = UserId,\n\t\tLeadID = SelectLead@LeadID,\n\t\tUserCreatedDateUTC = DateCreatedUTC,\n\t\tLeadCreatedDateUTC = LeadDateCreatedUTC,\n\t\tFirstMobileAppOpenDateUTC\n\t)) ~> sink1"
+		}
+	}
+}

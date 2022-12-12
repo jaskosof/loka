@@ -1,0 +1,42 @@
+{
+	"name": "Landing_2_DB_Server",
+	"properties": {
+		"folder": {
+			"name": "Dimensions"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "CMS_V2_DL_Landing_folder",
+						"type": "DatasetReference"
+					},
+					"name": "Raw2DB"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSQL_Insight_table",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DerivedColumn1"
+				},
+				{
+					"name": "Select"
+				},
+				{
+					"name": "MapDrifted1",
+					"description": "Creates an explicit mapping for each drifted column"
+				}
+			],
+			"script": "parameters{\n\tFolderName as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tmoveFiles: [('CMS_V2_landing/' + $FolderName),('CMS_V2/' + $FolderName)],\n\tdocumentForm: 'documentPerLine') ~> Raw2DB\nMapDrifted1 derive(SourceID = 1,\n\t\tServerPlatform = 'CMS_V2') ~> DerivedColumn1\nDerivedColumn1 select(mapColumn(\n\t\tSourceID,\n\t\tServerId,\n\t\tServerInstance,\n\t\tServerName,\n\t\tServerPlatform\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> Select\nRaw2DB derive(ServerId = toInteger(byName('ServerId')),\n\t\tServerInstance = toString(byName('Name')),\n\t\tServerName = toString(byName('Description'))) ~> MapDrifted1\nSelect sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tSourceID,\n\t\tServerID = ServerId,\n\t\tServerInstance,\n\t\tServerName,\n\t\tServerPlatform\n\t)) ~> sink1"
+		}
+	}
+}

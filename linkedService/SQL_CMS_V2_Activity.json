@@ -1,0 +1,22 @@
+{
+	"name": "SQL_CMS_V2_Activity",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "KeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "SQL-CMS-V2-Activity"
+			}
+		},
+		"connectVia": {
+			"referenceName": "ir-al-dbarchive-server",
+			"type": "IntegrationRuntimeReference"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
+}

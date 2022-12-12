@@ -1,0 +1,488 @@
+{
+	"name": "Leads to raw",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup previous load mark",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "select * from [etl].[IncrementalLoadMark] WHERE SourceServer = 'Leads'",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "BIServer_SQL",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Load tables",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup previous load mark",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup previous load mark').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Lookup new load mark",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "select MAX(@{item().MarkColumn}) as MaxMark from @{item().SchemaName}.@{item().TableName}",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "Leads_DB",
+									"type": "DatasetReference"
+								},
+								"firstRowOnly": true
+							}
+						},
+						{
+							"name": "NewRecords",
+							"type": "Switch",
+							"dependsOn": [
+								{
+									"activity": "Lookup new load mark",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@if(equals(item().LoadType, 'Full'), 'Full load', if(greaterOrEquals(sub(int(coalesce(activity('Lookup new load mark').output.firstRow.MaxMark, '-1')), int(item().MarkValue)), 1000000), 'Dynamic load', if(greater(sub(int(coalesce(activity('Lookup new load mark').output.firstRow.MaxMark, '-1')), int(item().MarkValue)), 0), 'Diff load', 'Default')))",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "Dynamic load",
+										"activities": [
+											{
+												"name": "Copy data to the landing zone with dynamic range",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "SqlServerSource",
+														"sqlReaderQuery": {
+															"value": "select * from @{item().SchemaName}.@{item().TableName} with (nolock) where @{item().MarkColumn} > @{item().MarkValue} and @{item().MarkColumn} <= @{activity('Lookup new load mark').output.firstRow.MaxMark} and ?AdfDynamicRangePartitionCondition",
+															"type": "Expression"
+														},
+														"queryTimeout": "02:00:00",
+														"partitionOption": "DynamicRange",
+														"partitionSettings": {
+															"partitionColumnName": {
+																"value": "@{item().MarkColumn}",
+																"type": "Expression"
+															},
+															"partitionUpperBound": "",
+															"partitionLowerBound": ""
+														}
+													},
+													"sink": {
+														"type": "JsonSink",
+														"storeSettings": {
+															"type": "AzureBlobFSWriteSettings"
+														},
+														"formatSettings": {
+															"type": "JsonWriteSettings"
+														}
+													},
+													"enableStaging": false
+												},
+												"inputs": [
+													{
+														"referenceName": "Leads_DB",
+														"type": "DatasetReference"
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "CMS_V2_DL_folder",
+														"type": "DatasetReference",
+														"parameters": {
+															"FolderName": {
+																"value": "@item().FolderName",
+																"type": "Expression"
+															}
+														}
+													}
+												]
+											},
+											{
+												"name": "Update Mark with latest value dynamic",
+												"type": "SqlServerStoredProcedure",
+												"dependsOn": [
+													{
+														"activity": "Copy data to the landing zone with dynamic range",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"storedProcedureName": "[etl].[usp_IncrementalLoadMark_Update_MarkValue]",
+													"storedProcedureParameters": {
+														"ID": {
+															"value": {
+																"value": "@item().ID",
+																"type": "Expression"
+															},
+															"type": "Int32"
+														},
+														"MarkValue": {
+															"value": {
+																"value": "@activity('Lookup new load mark').output.firstRow.MaxMark",
+																"type": "Expression"
+															},
+															"type": "String"
+														}
+													}
+												},
+												"linkedServiceName": {
+													"referenceName": "BIServer_EDW",
+													"type": "LinkedServiceReference"
+												}
+											}
+										]
+									},
+									{
+										"value": "Diff load",
+										"activities": [
+											{
+												"name": "Copy data to the landing zone",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "SqlServerSource",
+														"sqlReaderQuery": {
+															"value": "select * from @{item().SchemaName}.@{item().TableName} with (nolock) where @{item().MarkColumn} > @{item().MarkValue} and @{item().MarkColumn} <= @{activity('Lookup new load mark').output.firstRow.MaxMark}",
+															"type": "Expression"
+														},
+														"queryTimeout": "02:00:00",
+														"partitionOption": "None"
+													},
+													"sink": {
+														"type": "JsonSink",
+														"storeSettings": {
+															"type": "AzureBlobFSWriteSettings"
+														},
+														"formatSettings": {
+															"type": "JsonWriteSettings"
+														}
+													},
+													"enableStaging": false
+												},
+												"inputs": [
+													{
+														"referenceName": "Leads_DB",
+														"type": "DatasetReference"
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "CMS_V2_DL_file",
+														"type": "DatasetReference",
+														"parameters": {
+															"TableName": {
+																"value": "@replace(replace(item().TableName, '[', ''), ']', '')",
+																"type": "Expression"
+															},
+															"PipelineID": {
+																"value": "@pipeline().RunId",
+																"type": "Expression"
+															},
+															"FolderName": {
+																"value": "@item().FolderName",
+																"type": "Expression"
+															}
+														}
+													}
+												]
+											},
+											{
+												"name": "Update Mark with latest value",
+												"type": "SqlServerStoredProcedure",
+												"dependsOn": [
+													{
+														"activity": "Copy data to the landing zone",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"storedProcedureName": "[etl].[usp_IncrementalLoadMark_Update_MarkValue]",
+													"storedProcedureParameters": {
+														"ID": {
+															"value": {
+																"value": "@item().ID",
+																"type": "Expression"
+															},
+															"type": "Int32"
+														},
+														"MarkValue": {
+															"value": {
+																"value": "@activity('Lookup new load mark').output.firstRow.MaxMark",
+																"type": "Expression"
+															},
+															"type": "String"
+														}
+													}
+												},
+												"linkedServiceName": {
+													"referenceName": "BIServer_EDW",
+													"type": "LinkedServiceReference"
+												}
+											}
+										]
+									},
+									{
+										"value": "Full load",
+										"activities": [
+											{
+												"name": "Update Mark with latest value dynamic_copy1",
+												"type": "SqlServerStoredProcedure",
+												"dependsOn": [
+													{
+														"activity": "Copy data to the landing zone full load",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"storedProcedureName": "[etl].[usp_IncrementalLoadMark_Update_MarkValue]",
+													"storedProcedureParameters": {
+														"ID": {
+															"value": {
+																"value": "@item().ID",
+																"type": "Expression"
+															},
+															"type": "Int32"
+														},
+														"MarkValue": {
+															"value": {
+																"value": "@activity('Lookup new load mark').output.firstRow.MaxMark",
+																"type": "Expression"
+															},
+															"type": "String"
+														}
+													}
+												},
+												"linkedServiceName": {
+													"referenceName": "BIServer_EDW",
+													"type": "LinkedServiceReference"
+												}
+											},
+											{
+												"name": "Delete existing files",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "CMS_V2_DL_folder",
+														"type": "DatasetReference",
+														"parameters": {
+															"FolderName": {
+																"value": "@item().TableName",
+																"type": "Expression"
+															}
+														}
+													},
+													"logStorageSettings": {
+														"linkedServiceName": {
+															"referenceName": "Azure_DL",
+															"type": "LinkedServiceReference"
+														},
+														"path": "logs/DeletedFiles"
+													},
+													"enableLogging": true,
+													"storeSettings": {
+														"type": "AzureBlobFSReadSettings",
+														"recursive": true,
+														"enablePartitionDiscovery": false
+													}
+												}
+											},
+											{
+												"name": "Copy data to the landing zone full load",
+												"type": "Copy",
+												"dependsOn": [
+													{
+														"activity": "Delete existing files",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "SqlServerSource",
+														"sqlReaderQuery": {
+															"value": "select * from @{item().SchemaName}.@{item().TableName} with (nolock)",
+															"type": "Expression"
+														},
+														"queryTimeout": "02:00:00",
+														"partitionOption": "None"
+													},
+													"sink": {
+														"type": "JsonSink",
+														"storeSettings": {
+															"type": "AzureBlobFSWriteSettings"
+														},
+														"formatSettings": {
+															"type": "JsonWriteSettings"
+														}
+													},
+													"enableStaging": false
+												},
+												"inputs": [
+													{
+														"referenceName": "Leads_DB",
+														"type": "DatasetReference"
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "CMS_V2_DL_file",
+														"type": "DatasetReference",
+														"parameters": {
+															"TableName": {
+																"value": "@replace(replace(item().TableName, '[', ''), ']', '')",
+																"type": "Expression"
+															},
+															"PipelineID": {
+																"value": "@pipeline().RunId",
+																"type": "Expression"
+															},
+															"FolderName": {
+																"value": "@item().FolderName",
+																"type": "Expression"
+															}
+														}
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"NewRecords": {
+				"type": "String",
+				"defaultValue": "0"
+			},
+			"TableName": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Source to raw"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-11-22T11:34:43Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

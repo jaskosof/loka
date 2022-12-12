@@ -1,0 +1,74 @@
+# Sample YAML file to validate and export an ARM template into a build artifact
+# Requires a package.json file located in the target repository
+trigger:
+- main #collaboration branch
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+
+# Delete previous deployment files from staging directory
+- task: DeleteFiles@1
+  inputs:
+    Contents: '$(Build.ArtifactStagingDirectory)/*' 
+
+# Installs Node and the npm packages saved in your package.json file in the build
+- task: NodeTool@0
+  inputs:
+    versionSpec: '10.x'
+  displayName: 'Install Node.js'
+
+- task: Npm@1
+  inputs:
+    workingDir: '$(Build.Repository.LocalPath)/DevOpsFiles'
+    command: 'install'
+    verbose: true
+  displayName: 'Install npm package'
+
+# Validates all of the Data Factory resources in the repository. You'll get the same validation errors as when "Validate All" is selected.
+# Enter the appropriate subscription and name for the source factory.
+- task: Npm@1
+  inputs:
+    command: 'custom'
+    workingDir: '$(Build.Repository.LocalPath)/DevOpsFiles'
+    customCommand: 'run build validate $(Build.Repository.LocalPath) /subscriptions/44829bad-aa0d-4833-b02e-1d41bc061582/resourceGroups/rg-bi-dev-001/providers/Microsoft.DataFactory/factories/adf-aldw-dev-001'
+  displayName: 'Validate'
+
+# Validate and then generate the ARM template into the destination folder, which is the same as selecting "Publish" from the UX.
+# The ARM template generated isn't published to the live version of the factory. Deployment should be done by using a CI/CD pipeline. 
+- task: Npm@1
+  inputs:
+    command: 'custom'
+    workingDir: '$(Build.Repository.LocalPath)/DevOpsFiles'
+    customCommand: 'run build export $(Build.Repository.LocalPath) /subscriptions/44829bad-aa0d-4833-b02e-1d41bc061582/resourceGroups/rg-bi-dev-001/providers/Microsoft.DataFactory/factories/adf-aldw-dev-001 "ArmTemplate"'
+  displayName: 'Validate and Generate ARM template'
+
+# Publish the artifact to be used as a source for a release pipeline.
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Build.Repository.LocalPath)/DevOpsFiles/ArmTemplate'
+    artifact: 'ArmTemplates'
+    publishLocation: 'pipeline'
+
+#Make ps1 files available to the release
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.Repository.LocalPath)/DevOpsFiles'
+    contents: '*.ps1'
+    targetFolder: $(Build.ArtifactStagingDirectory)
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: $(Build.ArtifactStagingDirectory)
+    artifactName: PowerShellScripts
+
+#Make global parameter files available to the release
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.Repository.LocalPath)/GlobalParameters'
+    contents: '*.json'
+    targetFolder: $(Build.ArtifactStagingDirectory)
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: $(Build.ArtifactStagingDirectory)
+    artifactName: GlobalParameters

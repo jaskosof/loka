@@ -1,0 +1,25 @@
+{
+	"name": "Daily at 07 10 EST",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2021-10-21T15:13:00",
+				"timeZone": "Eastern Standard Time",
+				"schedule": {
+					"minutes": [
+						10
+					],
+					"hours": [
+						7
+					]
+				}
+			}
+		}
+	}
+}

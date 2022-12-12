@@ -1,0 +1,16 @@
+{
+	"name": "AzureSQL_Insight_db",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSQL_Insight",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Shared"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

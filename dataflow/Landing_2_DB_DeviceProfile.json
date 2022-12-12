@@ -1,0 +1,49 @@
+{
+	"name": "Landing_2_DB_DeviceProfile",
+	"properties": {
+		"folder": {
+			"name": "Dimensions"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "CMS_V2_DL_folder",
+						"type": "DatasetReference"
+					},
+					"name": "Raw2DB"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSQL_Insight_table",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DerivedColumn1"
+				},
+				{
+					"name": "Select1"
+				},
+				{
+					"name": "Aggregate1"
+				},
+				{
+					"name": "MapDrifted",
+					"description": "Creates an explicit mapping for each drifted column"
+				},
+				{
+					"name": "Filter1",
+					"description": "Platform <> '0'"
+				}
+			],
+			"script": "parameters{\n\tFolderName as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tdocumentForm: 'documentPerLine') ~> Raw2DB\nAggregate1 derive(SourceID = 2) ~> DerivedColumn1\nDerivedColumn1 select(mapColumn(\n\t\tPlatform,\n\t\tManufacturer,\n\t\tModel,\n\t\tIdiom,\n\t\tSourceID\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> Select1\nFilter1 aggregate(groupBy(Platform,\n\t\tManufacturer,\n\t\tModel,\n\t\tIdiom),\n\teach(match(!in(['Platform','Manufacturer','Model','Idiom'],name)), $$ = first($$))) ~> Aggregate1\nRaw2DB derive(FirstOpenDateTime = toString(byName('FirstOpenDateTime')),\n\t\tId = toString(byName('Id')),\n\t\tIdiom = toString(byName('Idiom')),\n\t\tLastOpenDateTime = toString(byName('LastOpenDateTime')),\n\t\tLeadActualFirstDateTimeOpen = toString(byName('LeadActualFirstDateTimeOpen')),\n\t\tLeadId = toString(byName('LeadId')),\n\t\tManufacturer = toString(byName('Manufacturer')),\n\t\tModel = toString(byName('Model')),\n\t\tName = toString(byName('Name')),\n\t\tPNSHandle = toString(byName('PNSHandle')),\n\t\tPermissionToSendNotifications = toString(byName('PermissionToSendNotifications')),\n\t\tPermissionToSendNotificationsChangedDateTime = toString(byName('PermissionToSendNotificationsChangedDateTime')),\n\t\tPermissionToUseGPS = toString(byName('PermissionToUseGPS')),\n\t\tPermissionToUseGPSChangedDateTime = toString(byName('PermissionToUseGPSChangedDateTime')),\n\t\tPlatform = toString(byName('Platform')),\n\t\tType = toString(byName('Type')),\n\t\tVersionOfHomeLocatorApp = toString(byName('VersionOfHomeLocatorApp'))) ~> MapDrifted\nMapDrifted filter(not(equals(Platform, '0'))) ~> Filter1\nSelect1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tPlatform,\n\t\tManufacturer,\n\t\tModel,\n\t\tDeviceType = Idiom,\n\t\tSourceID\n\t)) ~> sink1"
+		}
+	}
+}

@@ -1,0 +1,31 @@
+{
+	"name": "CMS_V2_DL_folder",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Azure_DL",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FolderName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "CMS_V2"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "CMS_V2/@{dataset().FolderName}",
+					"type": "Expression"
+				},
+				"fileSystem": "raw"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

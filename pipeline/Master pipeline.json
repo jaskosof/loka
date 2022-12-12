@@ -1,0 +1,89 @@
+{
+	"name": "Master pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Load dimensions",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Load data to DL",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Load Dimensions",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"ShouldReinitialize": false
+					}
+				}
+			},
+			{
+				"name": "Load facts",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Load dimensions",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Load Facts",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Process AAS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Load facts",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Proces cube",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Load data to DL",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Load data to DL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "Master"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-11-22T11:34:45Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

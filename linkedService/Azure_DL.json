@@ -1,0 +1,24 @@
+{
+	"name": "Azure_DL",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://staldldev001.dfs.core.windows.net",
+			"accountKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "KeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "Azure-DL",
+				"secretVersion": ""
+			}
+		},
+		"connectVia": {
+			"referenceName": "ir-azure",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

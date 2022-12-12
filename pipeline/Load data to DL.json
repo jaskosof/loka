@@ -1,0 +1,72 @@
+{
+	"name": "Load data to DL",
+	"properties": {
+		"activities": [
+			{
+				"name": "Load data from BISQL",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "BISQL to raw",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Load data from CMS_V2",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "CMS_V2 to raw",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Load data from Leads",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Load data from CMS_V2_Activity",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Leads to raw",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Load data from CMS_V2_Activity",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "CMS_V2_Activity to raw",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "Master"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-11-22T11:34:43Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
