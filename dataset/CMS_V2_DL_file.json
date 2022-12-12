@@ -17,7 +17,7 @@
 			}
 		},
 		"folder": {
-			"name": "Src"
+			"name": "DataLake"
 		},
 		"annotations": [],
 		"type": "Json",
