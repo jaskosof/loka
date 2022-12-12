@@ -136,9 +136,9 @@
 										}
 									}
 								},
-								"integrationRuntime": {
-									"referenceName": "ir-azure",
-									"type": "IntegrationRuntimeReference"
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
 								},
 								"traceLevel": "Fine"
 							}

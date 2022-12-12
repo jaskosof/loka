@@ -13,10 +13,6 @@
 				},
 				"secretName": "Insight"
 			}
-		},
-		"connectVia": {
-			"referenceName": "ir-azure",
-			"type": "IntegrationRuntimeReference"
 		}
 	}
 }

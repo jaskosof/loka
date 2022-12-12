@@ -46,26 +46,6 @@
 				}
 			},
 			{
-				"name": "Process AAS",
-				"type": "ExecutePipeline",
-				"dependsOn": [
-					{
-						"activity": "Load facts",
-						"dependencyConditions": [
-							"Completed"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "Proces cube",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true
-				}
-			},
-			{
 				"name": "Load data to DL",
 				"type": "ExecutePipeline",
 				"dependsOn": [],

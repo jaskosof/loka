@@ -12,10 +12,6 @@
 				},
 				"secretName": "SQL-CMS-V2-Activity"
 			}
-		},
-		"connectVia": {
-			"referenceName": "ir-al-dbarchive-server",
-			"type": "IntegrationRuntimeReference"
 		}
 	},
 	"type": "Microsoft.DataFactory/factories/linkedservices"

@@ -15,10 +15,6 @@
 				"secretName": "Azure-DL",
 				"secretVersion": ""
 			}
-		},
-		"connectVia": {
-			"referenceName": "ir-azure",
-			"type": "IntegrationRuntimeReference"
 		}
 	}
 }

@@ -12,10 +12,6 @@
 				},
 				"secretName": "BIServer-EDW"
 			}
-		},
-		"connectVia": {
-			"referenceName": "ir-al-dbarchive-server",
-			"type": "IntegrationRuntimeReference"
 		}
 	},
 	"type": "Microsoft.DataFactory/factories/linkedservices"
