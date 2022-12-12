@@ -6,7 +6,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "Shared"
+			"name": "DataWarehouse"
 		},
 		"annotations": [],
 		"type": "SqlServerTable",

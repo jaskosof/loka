@@ -14,7 +14,7 @@
 			}
 		},
 		"folder": {
-			"name": "Shared"
+			"name": "DataWarehouse"
 		},
 		"annotations": [],
 		"type": "AzureSqlTable",
