@@ -3,32 +3,6 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Load data from BISQL",
-				"type": "ExecutePipeline",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "BISQL to raw",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true
-				}
-			},
-			{
-				"name": "Load data from CMS_V2",
-				"type": "ExecutePipeline",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "CMS_V2 to raw",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true
-				}
-			},
-			{
 				"name": "Load data from Leads",
 				"type": "ExecutePipeline",
 				"dependsOn": [

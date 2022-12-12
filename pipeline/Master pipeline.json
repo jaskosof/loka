@@ -3,49 +3,6 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Load dimensions",
-				"type": "ExecutePipeline",
-				"dependsOn": [
-					{
-						"activity": "Load data to DL",
-						"dependencyConditions": [
-							"Completed"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "Load Dimensions",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true,
-					"parameters": {
-						"ShouldReinitialize": false
-					}
-				}
-			},
-			{
-				"name": "Load facts",
-				"type": "ExecutePipeline",
-				"dependsOn": [
-					{
-						"activity": "Load dimensions",
-						"dependencyConditions": [
-							"Completed"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "Load Facts",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true
-				}
-			},
-			{
 				"name": "Load data to DL",
 				"type": "ExecutePipeline",
 				"dependsOn": [],
