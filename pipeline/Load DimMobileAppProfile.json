@@ -51,7 +51,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "CMS_V2_DL_folder",
+						"referenceName": "SRC_DL_folder",
 						"type": "DatasetReference",
 						"parameters": {
 							"FolderName": {
