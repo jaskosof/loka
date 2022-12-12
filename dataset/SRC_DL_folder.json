@@ -1,5 +1,5 @@
 {
-	"name": "CMS_V2_DL_folder",
+	"name": "SRC_DL_folder",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "Azure_DL",
@@ -11,18 +11,14 @@
 			}
 		},
 		"folder": {
-			"name": "CMS_V2"
+			"name": "Src"
 		},
 		"annotations": [],
 		"type": "Json",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"folderPath": {
-					"value": "CMS_V2/@{dataset().FolderName}",
-					"type": "Expression"
-				},
-				"fileSystem": "raw"
+				"fileSystem": "src"
 			}
 		},
 		"schema": {}
