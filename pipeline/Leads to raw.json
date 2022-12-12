@@ -22,7 +22,7 @@
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "BIServer_SQL",
+						"referenceName": "DW_SQL",
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": false
@@ -69,7 +69,7 @@
 									"partitionOption": "None"
 								},
 								"dataset": {
-									"referenceName": "Leads_DB",
+									"referenceName": "DW_SQL",
 									"type": "DatasetReference"
 								},
 								"firstRowOnly": true
@@ -139,13 +139,13 @@
 												},
 												"inputs": [
 													{
-														"referenceName": "Leads_DB",
+														"referenceName": "DW_SQL",
 														"type": "DatasetReference"
 													}
 												],
 												"outputs": [
 													{
-														"referenceName": "SRC_DL_folder",
+														"referenceName": "Src_DL_folder",
 														"type": "DatasetReference",
 														"parameters": {
 															"FolderName": {
@@ -239,13 +239,13 @@
 												},
 												"inputs": [
 													{
-														"referenceName": "Leads_DB",
+														"referenceName": "DW_SQL",
 														"type": "DatasetReference"
 													}
 												],
 												"outputs": [
 													{
-														"referenceName": "CMS_V2_DL_file",
+														"referenceName": "Raw_DL_file",
 														"type": "DatasetReference",
 														"parameters": {
 															"TableName": {
@@ -369,7 +369,7 @@
 												"userProperties": [],
 												"typeProperties": {
 													"dataset": {
-														"referenceName": "SRC_DL_folder",
+														"referenceName": "Src_DL_folder",
 														"type": "DatasetReference",
 														"parameters": {
 															"FolderName": {
@@ -435,13 +435,13 @@
 												},
 												"inputs": [
 													{
-														"referenceName": "Leads_DB",
+														"referenceName": "DW_SQL",
 														"type": "DatasetReference"
 													}
 												],
 												"outputs": [
 													{
-														"referenceName": "CMS_V2_DL_file",
+														"referenceName": "Raw_DL_file",
 														"type": "DatasetReference",
 														"parameters": {
 															"TableName": {

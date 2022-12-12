@@ -6,7 +6,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "CMS_V2"
+			"name": "DataLake"
 		},
 		"annotations": [],
 		"type": "SqlServerTable",

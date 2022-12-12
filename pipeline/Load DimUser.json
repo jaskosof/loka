@@ -25,7 +25,7 @@
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "BIServer_SQL",
+						"referenceName": "DW_SQL",
 						"type": "DatasetReference"
 					}
 				}

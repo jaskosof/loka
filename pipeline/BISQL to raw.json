@@ -22,7 +22,7 @@
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "BIServer_SQL",
+						"referenceName": "DW_SQL",
 						"type": "DatasetReference"
 					},
 					"firstRowOnly": false
@@ -69,7 +69,7 @@
 									"partitionOption": "None"
 								},
 								"dataset": {
-									"referenceName": "BIServer_SQL",
+									"referenceName": "DW_SQL",
 									"type": "DatasetReference"
 								},
 								"firstRowOnly": true
@@ -139,7 +139,7 @@
 												},
 												"inputs": [
 													{
-														"referenceName": "BIServer_SQL",
+														"referenceName": "DW_SQL",
 														"type": "DatasetReference"
 													}
 												],
@@ -239,7 +239,7 @@
 												},
 												"inputs": [
 													{
-														"referenceName": "BIServer_SQL",
+														"referenceName": "DW_SQL",
 														"type": "DatasetReference"
 													}
 												],

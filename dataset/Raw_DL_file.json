@@ -1,5 +1,5 @@
 {
-	"name": "CMS_V2_DL_file",
+	"name": "Raw_DL_file",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "Azure_DL",

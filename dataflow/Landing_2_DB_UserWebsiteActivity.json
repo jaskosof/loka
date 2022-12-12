@@ -16,7 +16,7 @@
 				},
 				{
 					"dataset": {
-						"referenceName": "SRC_DL_folder",
+						"referenceName": "Src_DL_folder",
 						"type": "DatasetReference"
 					},
 					"name": "Site"

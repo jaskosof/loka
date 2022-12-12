@@ -1,5 +1,5 @@
 {
-	"name": "BIServer_SQL",
+	"name": "DW_SQL",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "BIServer_EDW",
