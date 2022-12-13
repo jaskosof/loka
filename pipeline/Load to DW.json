@@ -110,7 +110,7 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"storedProcedureName": "[import].[usp_ImportTable_Delete_Data]",
+								"storedProcedureName": "[import].[usp_ImportTable_Truncate_Data]",
 								"storedProcedureParameters": {
 									"TableName": {
 										"value": "OperatingPeriod",
@@ -163,10 +163,10 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"storedProcedureName": "[import].[usp_ImportTable_Delete_Data]",
+								"storedProcedureName": "[import].[usp_ImportTable_Truncate_Data]",
 								"storedProcedureParameters": {
 									"TableName": {
-										"value": "VehicleEvents",
+										"value": "VehicleEvent",
 										"type": "String"
 									}
 								}
