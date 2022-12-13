@@ -124,12 +124,6 @@
 										"User": {
 											"FolderName": "User"
 										},
-										"Lead": {
-											"FolderName": "Leads"
-										},
-										"LeadMobileAppOpeningAudit": {
-											"FolderName": "LeadMobileAppOpeningAudit"
-										},
 										"sink1": {
 											"Schema": "import",
 											"TableName": "DimUser"

@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "Leads to raw",
+						"referenceName": "Src to Landing",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true

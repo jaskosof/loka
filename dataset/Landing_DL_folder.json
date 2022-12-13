@@ -1,0 +1,22 @@
+{
+	"name": "Landing_DL_folder",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Azure_DL",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "DataLake"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "landing"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

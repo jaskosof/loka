@@ -231,15 +231,6 @@
 										"UserListingViewExpanded": {
 											"FolderName": "UserListingViewExpanded"
 										},
-										"User": {
-											"FolderName": "User"
-										},
-										"LeadMobileAppOpeningAudit": {
-											"FolderName": "LeadMobileAppOpeningAudit"
-										},
-										"LeadMobileDevice": {
-											"FolderName": "LeadMobileDevice"
-										},
 										"FactMobileUserSystemUsageSnapshot": {
 											"Schema": "dbo",
 											"TableName": "FactMobileUserSystemUsageSnapshot"

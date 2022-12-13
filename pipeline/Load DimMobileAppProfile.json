@@ -52,13 +52,7 @@
 				"typeProperties": {
 					"dataset": {
 						"referenceName": "Src_DL_folder",
-						"type": "DatasetReference",
-						"parameters": {
-							"FolderName": {
-								"value": "@activity('Lookup LeadMobileDevice folder').output.firstRow.FolderName",
-								"type": "Expression"
-							}
-						}
+						"type": "DatasetReference"
 					},
 					"fieldList": [
 						"childItems"
@@ -121,12 +115,6 @@
 										}
 									},
 									"datasetParameters": {
-										"Raw2DB": {
-											"FolderName": {
-												"value": "@activity('Lookup LeadMobileDevice folder').output.firstRow.FolderName",
-												"type": "Expression"
-											}
-										},
 										"sink1": {
 											"Schema": "import",
 											"TableName": "DimMobileAppProfile"

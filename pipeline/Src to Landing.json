@@ -1,13 +1,49 @@
 {
-	"name": "Leads to raw",
+	"name": "Src to Landing",
 	"properties": {
 		"activities": [
 			{
-				"name": "Lookup previous load mark",
-				"type": "Lookup",
+				"name": "GetFileListFromRaw",
+				"type": "GetMetadata",
 				"dependsOn": [],
 				"policy": {
-					"timeout": "7.00:00:00",
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "Raw_DL_folder",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "JsonReadSettings"
+					}
+				}
+			},
+			{
+				"name": "Copy Src to Landing",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "ForEach",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
 					"retry": 0,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
@@ -16,24 +52,51 @@
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
-						"type": "SqlServerSource",
-						"sqlReaderQuery": "select * from [etl].[IncrementalLoadMark] WHERE SourceServer = 'Leads'",
-						"queryTimeout": "02:00:00",
-						"partitionOption": "None"
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"modifiedDatetimeStart": {
+								"value": "@variables('maxTime')",
+								"type": "Expression"
+							},
+							"wildcardFileName": "*.json",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
 					},
-					"dataset": {
-						"referenceName": "DW_SQL",
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "Src_DL_folder",
 						"type": "DatasetReference"
-					},
-					"firstRowOnly": false
-				}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Landing_DL_folder",
+						"type": "DatasetReference"
+					}
+				]
 			},
 			{
-				"name": "Load tables",
+				"name": "ForEach",
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "Lookup previous load mark",
+						"activity": "GetFileListFromRaw",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -42,16 +105,16 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('Lookup previous load mark').output.value",
+						"value": "@activity('GetFileListFromRaw').output.childItems",
 						"type": "Expression"
 					},
 					"activities": [
 						{
-							"name": "Lookup new load mark",
-							"type": "Lookup",
+							"name": "GetFileMetadata",
+							"type": "GetMetadata",
 							"dependsOn": [],
 							"policy": {
-								"timeout": "7.00:00:00",
+								"timeout": "0.12:00:00",
 								"retry": 0,
 								"retryIntervalInSeconds": 30,
 								"secureOutput": false,
@@ -59,28 +122,28 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"source": {
-									"type": "SqlServerSource",
-									"sqlReaderQuery": {
-										"value": "select MAX(@{item().MarkColumn}) as MaxMark from @{item().SchemaName}.@{item().TableName}",
-										"type": "Expression"
-									},
-									"queryTimeout": "02:00:00",
-									"partitionOption": "None"
-								},
 								"dataset": {
-									"referenceName": "DW_SQL",
+									"referenceName": "Raw_DL_folder",
 									"type": "DatasetReference"
 								},
-								"firstRowOnly": true
+								"fieldList": [
+									"lastModified"
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
 							}
 						},
 						{
-							"name": "NewRecords",
-							"type": "Switch",
+							"name": "If Condition",
+							"type": "IfCondition",
 							"dependsOn": [
 								{
-									"activity": "Lookup new load mark",
+									"activity": "GetFileMetadata",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -88,379 +151,23 @@
 							],
 							"userProperties": [],
 							"typeProperties": {
-								"on": {
-									"value": "@if(equals(item().LoadType, 'Full'), 'Full load', if(greaterOrEquals(sub(int(coalesce(activity('Lookup new load mark').output.firstRow.MaxMark, '-1')), int(item().MarkValue)), 1000000), 'Dynamic load', if(greater(sub(int(coalesce(activity('Lookup new load mark').output.firstRow.MaxMark, '-1')), int(item().MarkValue)), 0), 'Diff load', 'Default')))",
+								"expression": {
+									"value": "@greater(activity('GetFileMetadata').output.lastModified, variables('maxTime'))",
 									"type": "Expression"
 								},
-								"cases": [
+								"ifTrueActivities": [
 									{
-										"value": "Dynamic load",
-										"activities": [
-											{
-												"name": "Copy data to the landing zone with dynamic range",
-												"type": "Copy",
-												"dependsOn": [],
-												"policy": {
-													"timeout": "7.00:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"source": {
-														"type": "SqlServerSource",
-														"sqlReaderQuery": {
-															"value": "select * from @{item().SchemaName}.@{item().TableName} with (nolock) where @{item().MarkColumn} > @{item().MarkValue} and @{item().MarkColumn} <= @{activity('Lookup new load mark').output.firstRow.MaxMark} and ?AdfDynamicRangePartitionCondition",
-															"type": "Expression"
-														},
-														"queryTimeout": "02:00:00",
-														"partitionOption": "DynamicRange",
-														"partitionSettings": {
-															"partitionColumnName": {
-																"value": "@{item().MarkColumn}",
-																"type": "Expression"
-															},
-															"partitionUpperBound": "",
-															"partitionLowerBound": ""
-														}
-													},
-													"sink": {
-														"type": "JsonSink",
-														"storeSettings": {
-															"type": "AzureBlobFSWriteSettings"
-														},
-														"formatSettings": {
-															"type": "JsonWriteSettings"
-														}
-													},
-													"enableStaging": false
-												},
-												"inputs": [
-													{
-														"referenceName": "DW_SQL",
-														"type": "DatasetReference"
-													}
-												],
-												"outputs": [
-													{
-														"referenceName": "Src_DL_folder",
-														"type": "DatasetReference",
-														"parameters": {
-															"FolderName": {
-																"value": "@item().FolderName",
-																"type": "Expression"
-															}
-														}
-													}
-												]
-											},
-											{
-												"name": "Update Mark with latest value dynamic",
-												"type": "SqlServerStoredProcedure",
-												"dependsOn": [
-													{
-														"activity": "Copy data to the landing zone with dynamic range",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													}
-												],
-												"policy": {
-													"timeout": "7.00:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"storedProcedureName": "[etl].[usp_IncrementalLoadMark_Update_MarkValue]",
-													"storedProcedureParameters": {
-														"ID": {
-															"value": {
-																"value": "@item().ID",
-																"type": "Expression"
-															},
-															"type": "Int32"
-														},
-														"MarkValue": {
-															"value": {
-																"value": "@activity('Lookup new load mark').output.firstRow.MaxMark",
-																"type": "Expression"
-															},
-															"type": "String"
-														}
-													}
-												},
-												"linkedServiceName": {
-													"referenceName": "BIServer_EDW",
-													"type": "LinkedServiceReference"
-												}
+										"name": "Set maxTime",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "maxTime",
+											"value": {
+												"value": "@activity('GetFileMetadata').output.lastModified",
+												"type": "Expression"
 											}
-										]
-									},
-									{
-										"value": "Diff load",
-										"activities": [
-											{
-												"name": "Copy data to the landing zone",
-												"type": "Copy",
-												"dependsOn": [],
-												"policy": {
-													"timeout": "7.00:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"source": {
-														"type": "SqlServerSource",
-														"sqlReaderQuery": {
-															"value": "select * from @{item().SchemaName}.@{item().TableName} with (nolock) where @{item().MarkColumn} > @{item().MarkValue} and @{item().MarkColumn} <= @{activity('Lookup new load mark').output.firstRow.MaxMark}",
-															"type": "Expression"
-														},
-														"queryTimeout": "02:00:00",
-														"partitionOption": "None"
-													},
-													"sink": {
-														"type": "JsonSink",
-														"storeSettings": {
-															"type": "AzureBlobFSWriteSettings"
-														},
-														"formatSettings": {
-															"type": "JsonWriteSettings"
-														}
-													},
-													"enableStaging": false
-												},
-												"inputs": [
-													{
-														"referenceName": "DW_SQL",
-														"type": "DatasetReference"
-													}
-												],
-												"outputs": [
-													{
-														"referenceName": "Raw_DL_file",
-														"type": "DatasetReference",
-														"parameters": {
-															"TableName": {
-																"value": "@replace(replace(item().TableName, '[', ''), ']', '')",
-																"type": "Expression"
-															},
-															"PipelineID": {
-																"value": "@pipeline().RunId",
-																"type": "Expression"
-															},
-															"FolderName": {
-																"value": "@item().FolderName",
-																"type": "Expression"
-															}
-														}
-													}
-												]
-											},
-											{
-												"name": "Update Mark with latest value",
-												"type": "SqlServerStoredProcedure",
-												"dependsOn": [
-													{
-														"activity": "Copy data to the landing zone",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													}
-												],
-												"policy": {
-													"timeout": "7.00:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"storedProcedureName": "[etl].[usp_IncrementalLoadMark_Update_MarkValue]",
-													"storedProcedureParameters": {
-														"ID": {
-															"value": {
-																"value": "@item().ID",
-																"type": "Expression"
-															},
-															"type": "Int32"
-														},
-														"MarkValue": {
-															"value": {
-																"value": "@activity('Lookup new load mark').output.firstRow.MaxMark",
-																"type": "Expression"
-															},
-															"type": "String"
-														}
-													}
-												},
-												"linkedServiceName": {
-													"referenceName": "BIServer_EDW",
-													"type": "LinkedServiceReference"
-												}
-											}
-										]
-									},
-									{
-										"value": "Full load",
-										"activities": [
-											{
-												"name": "Update Mark with latest value dynamic_copy1",
-												"type": "SqlServerStoredProcedure",
-												"dependsOn": [
-													{
-														"activity": "Copy data to the landing zone full load",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													}
-												],
-												"policy": {
-													"timeout": "7.00:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"storedProcedureName": "[etl].[usp_IncrementalLoadMark_Update_MarkValue]",
-													"storedProcedureParameters": {
-														"ID": {
-															"value": {
-																"value": "@item().ID",
-																"type": "Expression"
-															},
-															"type": "Int32"
-														},
-														"MarkValue": {
-															"value": {
-																"value": "@activity('Lookup new load mark').output.firstRow.MaxMark",
-																"type": "Expression"
-															},
-															"type": "String"
-														}
-													}
-												},
-												"linkedServiceName": {
-													"referenceName": "BIServer_EDW",
-													"type": "LinkedServiceReference"
-												}
-											},
-											{
-												"name": "Delete existing files",
-												"type": "Delete",
-												"dependsOn": [],
-												"policy": {
-													"timeout": "7.00:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"dataset": {
-														"referenceName": "Src_DL_folder",
-														"type": "DatasetReference",
-														"parameters": {
-															"FolderName": {
-																"value": "@item().TableName",
-																"type": "Expression"
-															}
-														}
-													},
-													"logStorageSettings": {
-														"linkedServiceName": {
-															"referenceName": "Azure_DL",
-															"type": "LinkedServiceReference"
-														},
-														"path": "logs/DeletedFiles"
-													},
-													"enableLogging": true,
-													"storeSettings": {
-														"type": "AzureBlobFSReadSettings",
-														"recursive": true,
-														"enablePartitionDiscovery": false
-													}
-												}
-											},
-											{
-												"name": "Copy data to the landing zone full load",
-												"type": "Copy",
-												"dependsOn": [
-													{
-														"activity": "Delete existing files",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													}
-												],
-												"policy": {
-													"timeout": "7.00:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"source": {
-														"type": "SqlServerSource",
-														"sqlReaderQuery": {
-															"value": "select * from @{item().SchemaName}.@{item().TableName} with (nolock)",
-															"type": "Expression"
-														},
-														"queryTimeout": "02:00:00",
-														"partitionOption": "None"
-													},
-													"sink": {
-														"type": "JsonSink",
-														"storeSettings": {
-															"type": "AzureBlobFSWriteSettings"
-														},
-														"formatSettings": {
-															"type": "JsonWriteSettings"
-														}
-													},
-													"enableStaging": false
-												},
-												"inputs": [
-													{
-														"referenceName": "DW_SQL",
-														"type": "DatasetReference"
-													}
-												],
-												"outputs": [
-													{
-														"referenceName": "Raw_DL_file",
-														"type": "DatasetReference",
-														"parameters": {
-															"TableName": {
-																"value": "@replace(replace(item().TableName, '[', ''), ']', '')",
-																"type": "Expression"
-															},
-															"PipelineID": {
-																"value": "@pipeline().RunId",
-																"type": "Expression"
-															},
-															"FolderName": {
-																"value": "@item().FolderName",
-																"type": "Expression"
-															}
-														}
-													}
-												]
-											}
-										]
+										}
 									}
 								]
 							}
@@ -470,16 +177,13 @@
 			}
 		],
 		"variables": {
-			"NewRecords": {
+			"maxTime": {
 				"type": "String",
-				"defaultValue": "0"
-			},
-			"TableName": {
-				"type": "String"
+				"defaultValue": "1900-01-01T00:00:00Z"
 			}
 		},
 		"folder": {
-			"name": "Source to raw"
+			"name": "Source to Landing"
 		},
 		"annotations": [],
 		"lastPublishTime": "2021-11-22T11:34:43Z"

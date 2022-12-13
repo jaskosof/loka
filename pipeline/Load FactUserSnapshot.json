@@ -124,12 +124,6 @@
 										"User": {
 											"FolderName": "User"
 										},
-										"Site": {
-											"FolderName": "Site"
-										},
-										"Lead": {
-											"FolderName": "Leads"
-										},
 										"sink1": {
 											"Schema": "import",
 											"TableName": "FactUserSnapshot"
