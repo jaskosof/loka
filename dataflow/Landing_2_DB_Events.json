@@ -63,6 +63,7 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
+				"     moveFiles: ['landing','archive'],",
 				"     documentForm: 'documentPerLine') ~> source",
 				"source select(mapColumn(",
 				"          at,",
