@@ -14,10 +14,18 @@
 			],
 			"sinks": [
 				{
+					"dataset": {
+						"referenceName": "AzureSQL_DW_table",
+						"type": "DatasetReference"
+					},
 					"name": "VehicleEvent",
 					"description": "Sink to VehicleEvent table"
 				},
 				{
+					"dataset": {
+						"referenceName": "AzureSQL_DW_table",
+						"type": "DatasetReference"
+					},
 					"name": "OperatingPeriod",
 					"description": "Sink to OperatingPeriodTable"
 				}
@@ -102,12 +110,24 @@
 				"     skipDuplicateMapOutputs: true) ~> selectOperatingPeriodData",
 				"selectVehicleEventData sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> VehicleEvent",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> VehicleEvent",
 				"selectOperatingPeriodData sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> OperatingPeriod"
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> OperatingPeriod"
 			]
 		}
 	}

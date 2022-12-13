@@ -24,6 +24,7 @@
 					],
 					"storeSettings": {
 						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
 						"enablePartitionDiscovery": false
 					},
 					"formatSettings": {
@@ -77,7 +78,17 @@
 							"typeProperties": {
 								"dataflow": {
 									"referenceName": "Landing_2_DB_Events",
-									"type": "DataFlowReference"
+									"type": "DataFlowReference",
+									"datasetParameters": {
+										"VehicleEvent": {
+											"Schema": "import",
+											"TableName": "VehicleEvent"
+										},
+										"OperatingPeriod": {
+											"Schema": "import",
+											"TableName": "OperatingPeriod"
+										}
+									}
 								},
 								"compute": {
 									"coreCount": 8,
