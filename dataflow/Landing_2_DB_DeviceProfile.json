@@ -18,7 +18,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "AzureSQL_Insight_table",
+						"referenceName": "AzureSQL_DW_table",
 						"type": "DatasetReference"
 					},
 					"name": "sink1"

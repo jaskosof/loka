@@ -14,6 +14,26 @@
 					},
 					"waitOnCompletion": true
 				}
+			},
+			{
+				"name": "Load Data to DW",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Load Src Data to DL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Load to DW",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
 			}
 		],
 		"folder": {

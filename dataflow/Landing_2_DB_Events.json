@@ -1,0 +1,44 @@
+{
+	"name": "Landing_2_DB_Events",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Landing_DL_folder",
+						"type": "DatasetReference"
+					},
+					"name": "source"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "MapDrifted2",
+					"description": "Creates an explicit mapping for each drifted column"
+				},
+				{
+					"name": "parse1"
+				}
+			],
+			"scriptLines": [
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'arrayOfDocuments') ~> source",
+				"source derive(at = toString(byName('at')),",
+				"          event = toString(byName('event')),",
+				"          on = toString(byName('on')),",
+				"          organization_id = toString(byName('organization_id')),",
+				"          data = toString(byName('data'))) ~> MapDrifted2",
+				"MapDrifted2 parse(data = data ? (id as string,",
+				"     location as (at as string,",
+				"     lat as string,",
+				"     lng as string))[],",
+				"     format: 'json',",
+				"     documentForm: 'documentPerLine') ~> parse1"
+			]
+		}
+	}
+}

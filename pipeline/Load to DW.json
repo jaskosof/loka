@@ -1,10 +1,10 @@
 {
-	"name": "Load FactUserWebsiteActivity",
+	"name": "Load to DW",
 	"properties": {
 		"activities": [
 			{
-				"name": "Lookup TrackUserWebsite folder",
-				"type": "Lookup",
+				"name": "Get files from landing folder",
+				"type": "GetMetadata",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "7.00:00:00",
@@ -15,57 +15,15 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"source": {
-						"type": "SqlServerSource",
-						"sqlReaderQuery": {
-							"value": "select * from [etl].[IncrementalLoadMark] WHERE SourceServer = 'BISQL' and SchemaName = 'cms2' and TableName = 'Activity_TrackUserWebsite'",
-							"type": "Expression"
-						},
-						"queryTimeout": "02:00:00",
-						"partitionOption": "None"
-					},
 					"dataset": {
-						"referenceName": "DW_SQL",
+						"referenceName": "Landing_DL_folder",
 						"type": "DatasetReference"
-					}
-				}
-			},
-			{
-				"name": "Get files from landing folder",
-				"type": "GetMetadata",
-				"dependsOn": [
-					{
-						"activity": "Lookup TrackUserWebsite folder",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "7.00:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataset": {
-						"referenceName": "CMS_V2_DL_Landing_folder",
-						"type": "DatasetReference",
-						"parameters": {
-							"FolderName": {
-								"value": "@activity('Lookup TrackUserWebsite folder').output.firstRow.FolderName",
-								"type": "Expression"
-							}
-						}
 					},
 					"fieldList": [
 						"childItems"
 					],
 					"storeSettings": {
 						"type": "AzureBlobFSReadSettings",
-						"recursive": true,
 						"enablePartitionDiscovery": false
 					},
 					"formatSettings": {
@@ -92,11 +50,17 @@
 					},
 					"ifTrueActivities": [
 						{
-							"name": "Load FactUserWebsiteSnapshot",
+							"name": "Load Events",
 							"type": "ExecuteDataFlow",
 							"dependsOn": [
 								{
-									"activity": "Delete from import table",
+									"activity": "Truncate import table OperatingPeriod",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "Truncate import table VehicleEvents",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -112,23 +76,8 @@
 							"userProperties": [],
 							"typeProperties": {
 								"dataflow": {
-									"referenceName": "Landing_2_DB_UserWebsiteActivity",
-									"type": "DataFlowReference",
-									"parameters": {
-										"FolderName": {
-											"value": "'@{activity('Lookup TrackUserWebsite folder').output.firstRow.FolderName}'",
-											"type": "Expression"
-										}
-									},
-									"datasetParameters": {
-										"TrackUserWebsite": {
-											"FolderName": "@activity('Lookup TrackUserWebsite folder').output.firstRow.FolderName"
-										},
-										"SinkFactUserWebsiteSnapshot": {
-											"Schema": "import",
-											"TableName": "FactUserWebsiteActivitySnapshot"
-										}
-									}
+									"referenceName": "Landing_2_DB_Events",
+									"type": "DataFlowReference"
 								},
 								"compute": {
 									"coreCount": 8,
@@ -138,16 +87,9 @@
 							}
 						},
 						{
-							"name": "Delete from import table",
+							"name": "Truncate import table OperatingPeriod",
 							"type": "SqlServerStoredProcedure",
-							"dependsOn": [
-								{
-									"activity": "Lookup max ViewedOnDate",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
+							"dependsOn": [],
 							"policy": {
 								"timeout": "7.00:00:00",
 								"retry": 0,
@@ -159,23 +101,8 @@
 							"typeProperties": {
 								"storedProcedureName": "[import].[usp_ImportTable_Delete_Data]",
 								"storedProcedureParameters": {
-									"DaysToKeep": {
-										"value": "7",
-										"type": "Int32"
-									},
-									"RefDate": {
-										"value": {
-											"value": "@activity('Lookup max ViewedOnDate').output.firstRow.MaxViewedOnDate",
-											"type": "Expression"
-										},
-										"type": "DateTime"
-									},
-									"TableColumnName": {
-										"value": "ViewedOnDate",
-										"type": "String"
-									},
 									"TableName": {
-										"value": "FactUserWebsiteActivitySnapshot",
+										"value": "OperatingPeriod",
 										"type": "String"
 									}
 								}
@@ -186,11 +113,11 @@
 							}
 						},
 						{
-							"name": "Load data from import to dbo",
+							"name": "Load data from import to dbo OperatingPeriod",
 							"type": "SqlServerStoredProcedure",
 							"dependsOn": [
 								{
-									"activity": "Load FactUserWebsiteSnapshot",
+									"activity": "Load Events",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -205,7 +132,7 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"storedProcedureName": "[dbo].[usp_FactUserWebsiteActivitySnapshot_Load_Data]",
+								"storedProcedureName": "[dbo].[usp_VehicleEvents_Load_Data]",
 								"storedProcedureParameters": {
 									"LogID": {
 										"value": {
@@ -222,8 +149,8 @@
 							}
 						},
 						{
-							"name": "Lookup max ViewedOnDate",
-							"type": "Lookup",
+							"name": "Truncate import table VehicleEvents",
+							"type": "SqlServerStoredProcedure",
 							"dependsOn": [],
 							"policy": {
 								"timeout": "7.00:00:00",
@@ -234,17 +161,53 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"source": {
-									"type": "AzureSqlSource",
-									"sqlReaderQuery": "select max(ViewedOnDate) as MaxViewedOnDate from dbo.FactUserWebsiteActivitySnapshot",
-									"queryTimeout": "02:00:00",
-									"partitionOption": "None"
-								},
-								"dataset": {
-									"referenceName": "AzureSQL_Insight_db",
-									"type": "DatasetReference"
-								},
-								"firstRowOnly": true
+								"storedProcedureName": "[import].[usp_ImportTable_Delete_Data]",
+								"storedProcedureParameters": {
+									"TableName": {
+										"value": "VehicleEvents",
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSQL_Insight",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Load data from import to dbo VehicleEvents_copy1",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Load Events",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[usp_VehicleEvents_Load_Data]",
+								"storedProcedureParameters": {
+									"LogID": {
+										"value": {
+											"value": "@pipeline().RunId",
+											"type": "Expression"
+										},
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSQL_Insight",
+								"type": "LinkedServiceReference"
 							}
 						}
 					]
@@ -252,7 +215,7 @@
 			}
 		],
 		"folder": {
-			"name": "Facts"
+			"name": "Transformation"
 		},
 		"annotations": [],
 		"lastPublishTime": "2021-11-22T11:34:43Z"

@@ -1,5 +1,5 @@
 {
-	"name": "AzureSQL_Insight_table",
+	"name": "AzureSQL_DW_table",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AzureSQL_Insight",
