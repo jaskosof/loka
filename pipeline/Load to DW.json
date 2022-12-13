@@ -1,10 +1,10 @@
 {
-	"name": "Load FactUserSnapshot",
+	"name": "Load to DW",
 	"properties": {
 		"activities": [
 			{
-				"name": "Lookup user folder",
-				"type": "Lookup",
+				"name": "Get files from landing folder",
+				"type": "GetMetadata",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "7.00:00:00",
@@ -15,50 +15,9 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"source": {
-						"type": "SqlServerSource",
-						"sqlReaderQuery": {
-							"value": "select * from [etl].[IncrementalLoadMark] WHERE SourceServer = 'CMS_V2' and SchemaName = 'dbo' and TableName = '[User]'",
-							"type": "Expression"
-						},
-						"queryTimeout": "02:00:00",
-						"partitionOption": "None"
-					},
 					"dataset": {
-						"referenceName": "BIServer_SQL",
+						"referenceName": "Landing_DL_folder",
 						"type": "DatasetReference"
-					}
-				}
-			},
-			{
-				"name": "Get files from landing folder",
-				"type": "GetMetadata",
-				"dependsOn": [
-					{
-						"activity": "Lookup user folder",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "7.00:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataset": {
-						"referenceName": "CMS_V2_DL_Landing_folder",
-						"type": "DatasetReference",
-						"parameters": {
-							"FolderName": {
-								"value": "@activity('Lookup user folder').output.firstRow.FolderName",
-								"type": "Expression"
-							}
-						}
 					},
 					"fieldList": [
 						"childItems"
@@ -92,11 +51,17 @@
 					},
 					"ifTrueActivities": [
 						{
-							"name": "Load FactUserSnapshot from raw to import",
+							"name": "Load Events",
 							"type": "ExecuteDataFlow",
 							"dependsOn": [
 								{
-									"activity": "Truncate import table",
+									"activity": "Truncate import table OperatingPeriod",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "Truncate import table VehicleEvents",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -112,27 +77,16 @@
 							"userProperties": [],
 							"typeProperties": {
 								"dataflow": {
-									"referenceName": "Landing_2_DB_UserSnapshot",
+									"referenceName": "Landing_2_DB_Events",
 									"type": "DataFlowReference",
-									"parameters": {
-										"FolderName": {
-											"value": "'@{activity('Lookup user folder').output.firstRow.FolderName}'",
-											"type": "Expression"
-										}
-									},
 									"datasetParameters": {
-										"User": {
-											"FolderName": "User"
-										},
-										"Site": {
-											"FolderName": "Site"
-										},
-										"Lead": {
-											"FolderName": "Leads"
-										},
-										"sink1": {
+										"VehicleEvent": {
 											"Schema": "import",
-											"TableName": "FactUserSnapshot"
+											"TableName": "VehicleEvent"
+										},
+										"OperatingPeriod": {
+											"Schema": "import",
+											"TableName": "OperatingPeriod"
 										}
 									}
 								},
@@ -144,43 +98,7 @@
 							}
 						},
 						{
-							"name": "Load data from import to dbo",
-							"type": "SqlServerStoredProcedure",
-							"dependsOn": [
-								{
-									"activity": "Load FactUserSnapshot from raw to import",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"storedProcedureName": "[dbo].[usp_FactUserSnapshot_Load_Data]",
-								"storedProcedureParameters": {
-									"LogID": {
-										"value": {
-											"value": "@pipeline().RunId",
-											"type": "Expression"
-										},
-										"type": "String"
-									}
-								}
-							},
-							"linkedServiceName": {
-								"referenceName": "AzureSQL_Insight",
-								"type": "LinkedServiceReference"
-							}
-						},
-						{
-							"name": "Truncate import table",
+							"name": "Truncate import table OperatingPeriod",
 							"type": "SqlServerStoredProcedure",
 							"dependsOn": [],
 							"policy": {
@@ -195,13 +113,93 @@
 								"storedProcedureName": "[import].[usp_ImportTable_Truncate_Data]",
 								"storedProcedureParameters": {
 									"TableName": {
-										"value": "FactUserSnapshot",
+										"value": "OperatingPeriod",
 										"type": "String"
 									}
 								}
 							},
 							"linkedServiceName": {
-								"referenceName": "AzureSQL_Insight",
+								"referenceName": "AzureSqlLokaDW",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Load data from import to dbo OperatingPeriod",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Load Events",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[usp_OperatingPeriod_Load_Data]"
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlLokaDW",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Truncate import table VehicleEvents",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[import].[usp_ImportTable_Truncate_Data]",
+								"storedProcedureParameters": {
+									"TableName": {
+										"value": "VehicleEvent",
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlLokaDW",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Load data from import to dbo VehicleEvents_copy1",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Load Events",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[usp_VehicleEvent_Load_Data]"
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlLokaDW",
 								"type": "LinkedServiceReference"
 							}
 						}
@@ -210,7 +208,7 @@
 			}
 		],
 		"folder": {
-			"name": "Facts"
+			"name": "Transformation"
 		},
 		"annotations": [],
 		"lastPublishTime": "2021-11-22T11:34:43Z"

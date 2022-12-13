@@ -1,12 +1,12 @@
 {
-	"name": "AzureSQL_Insight_db",
+	"name": "AzureSQL_DW_db",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AzureSQL_Insight",
+			"referenceName": "AzureSqlLokaDW",
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "Shared"
+			"name": "DataWarehouse"
 		},
 		"annotations": [],
 		"type": "AzureSqlTable",

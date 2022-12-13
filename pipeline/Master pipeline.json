@@ -3,56 +3,33 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Load dimensions",
+				"name": "Load Src Data to DL",
 				"type": "ExecutePipeline",
-				"dependsOn": [
-					{
-						"activity": "Load data to DL",
-						"dependencyConditions": [
-							"Completed"
-						]
-					}
-				],
+				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "Load Dimensions",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true,
-					"parameters": {
-						"ShouldReinitialize": false
-					}
-				}
-			},
-			{
-				"name": "Load facts",
-				"type": "ExecutePipeline",
-				"dependsOn": [
-					{
-						"activity": "Load dimensions",
-						"dependencyConditions": [
-							"Completed"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "Load Facts",
+						"referenceName": "Src to Landing",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
 				}
 			},
 			{
-				"name": "Load data to DL",
+				"name": "Load Data to DW",
 				"type": "ExecutePipeline",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Load Src Data to DL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "Load data to DL",
+						"referenceName": "Load to DW",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true

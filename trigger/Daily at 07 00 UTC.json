@@ -1,5 +1,5 @@
 {
-	"name": "Daily at 07 10 EST",
+	"name": "Daily at 07 00 UTC",
 	"properties": {
 		"annotations": [],
 		"runtimeState": "Stopped",
@@ -9,11 +9,11 @@
 			"recurrence": {
 				"frequency": "Day",
 				"interval": 1,
-				"startTime": "2021-10-21T15:13:00",
-				"timeZone": "Eastern Standard Time",
+				"startTime": "2022-12-12T00:00:00",
+				"timeZone": "GMT Standard Time",
 				"schedule": {
 					"minutes": [
-						10
+						0
 					],
 					"hours": [
 						7

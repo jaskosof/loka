@@ -1,28 +1,19 @@
 {
-	"name": "CMS_V2_DL_Landing_folder",
+	"name": "Landing_DL_folder",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "Azure_DL",
 			"type": "LinkedServiceReference"
 		},
-		"parameters": {
-			"FolderName": {
-				"type": "string"
-			}
-		},
 		"folder": {
-			"name": "CMS_V2"
+			"name": "DataLake"
 		},
 		"annotations": [],
 		"type": "Json",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"folderPath": {
-					"value": "CMS_V2_landing/@{dataset().FolderName}",
-					"type": "Expression"
-				},
-				"fileSystem": "raw"
+				"fileSystem": "landing"
 			}
 		},
 		"schema": {}
