@@ -142,20 +142,8 @@
 								"secureInput": false
 							},
 							"userProperties": [],
-							"typeProperties": {
-								"storedProcedureName": "[dbo].[usp_VehicleEvents_Load_Data]",
-								"storedProcedureParameters": {
-									"LogID": {
-										"value": {
-											"value": "@pipeline().RunId",
-											"type": "Expression"
-										},
-										"type": "String"
-									}
-								}
-							},
 							"linkedServiceName": {
-								"referenceName": "AzureSQL_Insight",
+								"referenceName": "AzureSqlLokaDW",
 								"type": "LinkedServiceReference"
 							}
 						},
@@ -204,20 +192,8 @@
 								"secureInput": false
 							},
 							"userProperties": [],
-							"typeProperties": {
-								"storedProcedureName": "[dbo].[usp_VehicleEvents_Load_Data]",
-								"storedProcedureParameters": {
-									"LogID": {
-										"value": {
-											"value": "@pipeline().RunId",
-											"type": "Expression"
-										},
-										"type": "String"
-									}
-								}
-							},
 							"linkedServiceName": {
-								"referenceName": "AzureSQL_Insight",
+								"referenceName": "AzureSqlLokaDW",
 								"type": "LinkedServiceReference"
 							}
 						}

@@ -2,7 +2,7 @@
 	"name": "AzureSQL_DW_db",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AzureSQL_Insight",
+			"referenceName": "AzureSqlLokaDW",
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
