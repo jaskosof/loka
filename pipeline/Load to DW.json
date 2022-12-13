@@ -119,7 +119,7 @@
 								}
 							},
 							"linkedServiceName": {
-								"referenceName": "AzureSQL_Insight",
+								"referenceName": "AzureSqlLokaDW",
 								"type": "LinkedServiceReference"
 							}
 						},
@@ -169,7 +169,7 @@
 								}
 							},
 							"linkedServiceName": {
-								"referenceName": "AzureSQL_Insight",
+								"referenceName": "AzureSqlLokaDW",
 								"type": "LinkedServiceReference"
 							}
 						},
