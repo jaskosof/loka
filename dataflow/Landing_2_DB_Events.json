@@ -12,32 +12,102 @@
 					"name": "source"
 				}
 			],
-			"sinks": [],
-			"transformations": [
+			"sinks": [
 				{
-					"name": "MapDrifted2",
-					"description": "Creates an explicit mapping for each drifted column"
+					"name": "VehicleEvent",
+					"description": "Sink to VehicleEvent table"
 				},
 				{
-					"name": "parse1"
+					"name": "OperatingPeriod",
+					"description": "Sink to OperatingPeriodTable"
+				}
+			],
+			"transformations": [
+				{
+					"name": "expandParameters",
+					"description": "Expand all json parameters into separate columns. Nested json is also expanded here"
+				},
+				{
+					"name": "filterOperatingPeriods",
+					"description": "Filtering Operating Period related records"
+				},
+				{
+					"name": "filterVehicleEvents",
+					"description": "Filtering Vehicle Event related records"
+				},
+				{
+					"name": "selectVehicleEventData",
+					"description": "Select only data needed for the Vehicle Event table"
+				},
+				{
+					"name": "selectOperatingPeriodData",
+					"description": "Select only data for Operating Period table"
 				}
 			],
 			"scriptLines": [
-				"source(allowSchemaDrift: true,",
+				"source(output(",
+				"          at as string,",
+				"          data as (finish as string, id as string, location as (at as string, lat as double, lng as double), start as string),",
+				"          event as string,",
+				"          on as string,",
+				"          organization_id as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
-				"     documentForm: 'arrayOfDocuments') ~> source",
-				"source derive(at = toString(byName('at')),",
-				"          event = toString(byName('event')),",
-				"          on = toString(byName('on')),",
-				"          organization_id = toString(byName('organization_id')),",
-				"          data = toString(byName('data'))) ~> MapDrifted2",
-				"MapDrifted2 parse(data = data ? (id as string,",
-				"     location as (at as string,",
-				"     lat as string,",
-				"     lng as string))[],",
-				"     format: 'json',",
-				"     documentForm: 'documentPerLine') ~> parse1"
+				"     documentForm: 'documentPerLine') ~> source",
+				"source select(mapColumn(",
+				"          at,",
+				"          id = data.id,",
+				"          start = data.start,",
+				"          finish = data.finish,",
+				"          lat = data.location.lat,",
+				"          lng = data.location.lng,",
+				"          location_at = data.location.at,",
+				"          event,",
+				"          on,",
+				"          organization_id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> expandParameters",
+				"expandParameters filter(on == 'operating_period') ~> filterOperatingPeriods",
+				"expandParameters filter(on == 'vehicle') ~> filterVehicleEvents",
+				"filterVehicleEvents select(mapColumn(",
+				"          at,",
+				"          id,",
+				"          start,",
+				"          finish,",
+				"          lat,",
+				"          lng,",
+				"          location_at,",
+				"          event,",
+				"          on,",
+				"          organization_id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectVehicleEventData",
+				"filterOperatingPeriods select(mapColumn(",
+				"          at,",
+				"          id,",
+				"          start,",
+				"          finish,",
+				"          lat,",
+				"          lng,",
+				"          location_at,",
+				"          event,",
+				"          on,",
+				"          organization_id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectOperatingPeriodData",
+				"selectVehicleEventData sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> VehicleEvent",
+				"selectOperatingPeriodData sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> OperatingPeriod"
 			]
 		}
 	}
