@@ -117,7 +117,15 @@
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> VehicleEvent",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          Id = id,",
+				"          CreatedDateTime = at,",
+				"          Event = event,",
+				"          OrganizationId = organization_id,",
+				"          Lat = lat,",
+				"          Lng = lng",
+				"     )) ~> VehicleEvent",
 				"selectOperatingPeriodData sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     deletable:false,",
@@ -127,7 +135,14 @@
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> OperatingPeriod"
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          Id = id,",
+				"          CreatedDateTime = at,",
+				"          StartDateTime = start,",
+				"          FinishDateTime = finish,",
+				"          OrganizationId = organization_id",
+				"     )) ~> OperatingPeriod"
 			]
 		}
 	}
