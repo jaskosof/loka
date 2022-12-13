@@ -142,6 +142,9 @@
 								"secureInput": false
 							},
 							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[usp_OperatingPeriod_Load_Data]"
+							},
 							"linkedServiceName": {
 								"referenceName": "AzureSqlLokaDW",
 								"type": "LinkedServiceReference"
@@ -192,6 +195,9 @@
 								"secureInput": false
 							},
 							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[usp_VehicleEvent_Load_Data]"
+							},
 							"linkedServiceName": {
 								"referenceName": "AzureSqlLokaDW",
 								"type": "LinkedServiceReference"
