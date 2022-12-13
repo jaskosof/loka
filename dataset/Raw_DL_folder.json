@@ -1,20 +1,9 @@
 {
-	"name": "Raw_DL_file",
+	"name": "Raw_DL_folder",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "Azure_DL",
 			"type": "LinkedServiceReference"
-		},
-		"parameters": {
-			"TableName": {
-				"type": "string"
-			},
-			"PipelineID": {
-				"type": "string"
-			},
-			"FolderName": {
-				"type": "string"
-			}
 		},
 		"folder": {
 			"name": "DataLake"
@@ -24,14 +13,6 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": {
-					"value": "@{dataset().TableName}_@{formatDateTime(utcnow(), 'yyyy-MM-dd')}_@{dataset().PipelineID}.json",
-					"type": "Expression"
-				},
-				"folderPath": {
-					"value": "CMS_V2/@{dataset().FolderName}",
-					"type": "Expression"
-				},
 				"fileSystem": "raw"
 			}
 		},

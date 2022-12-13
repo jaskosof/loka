@@ -5,11 +5,6 @@
 			"referenceName": "Azure_DL",
 			"type": "LinkedServiceReference"
 		},
-		"parameters": {
-			"FolderName": {
-				"type": "string"
-			}
-		},
 		"folder": {
 			"name": "DataLake"
 		},
