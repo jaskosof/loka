@@ -3,13 +3,13 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Load data to DL",
+				"name": "Load Src Data to DL",
 				"type": "ExecutePipeline",
 				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "Load data to DL",
+						"referenceName": "Src to Landing",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
